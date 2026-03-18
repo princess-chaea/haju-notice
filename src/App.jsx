@@ -43,7 +43,16 @@ const App = () => {
     { label: '△ (연가)', value: '△(연가)' },
   ];
 
-  const [noticeCache, setNoticeCache] = useState({});
+  const [noticeCache, setNoticeCache] = useState(() => {
+    try {
+      const saved = localStorage.getItem('haju_notice_cache');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) { return {}; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('haju_notice_cache', JSON.stringify(noticeCache));
+  }, [noticeCache]);
 
   useEffect(() => {
     // 초기 로드 시 대량의 데이터를 미리 가져와 캐시 채우기
@@ -54,65 +63,71 @@ const App = () => {
 
   const initFetch = async () => {
     if (!API_URL) return;
-    setLoading(true);
+    
+    // 캐시가 비어있을 때만 로딩 표시
+    const isCacheEmpty = Object.keys(noticeCache).length === 0;
+    if (isCacheEmpty) setLoading(true);
+
     try {
       const res = await fetch(`${API_URL}?action=list&limit=30`);
       const json = await res.json();
       if (json.data && Array.isArray(json.data)) {
-        const newCache = {};
+        const newCache = { ...noticeCache };
         json.data.forEach(item => {
           const dateKey = formatDateString(item.안내날짜);
           newCache[dateKey] = item;
         });
         setNoticeCache(newCache);
         
-        // 오늘 날짜 데이터가 있으면 기본값으로 설정
+        // 현재 표기할 데이터 설정
         const today = getTodayKST();
         if (newCache[today]) {
           setData(newCache[today]);
-        } else {
-          // 오늘 데이터 없으면 가장 최근 데이터 보여주기
+          setFormData(prev => ({ ...prev, noticeDate: today }));
+        } else if (json.data[0]) {
+          const latestDate = formatDateString(json.data[0].안내날짜);
           setData(json.data[0]);
-          if (json.data[0]) {
-            setFormData(prev => ({ ...prev, noticeDate: formatDateString(json.data[0].안내날짜) }));
-          }
+          setFormData(prev => ({ ...prev, noticeDate: latestDate }));
         }
       }
     } catch (err) {
       console.error("Init fetch error:", err);
     } finally {
-      setLoading(false);
+      if (isCacheEmpty) setLoading(false);
     }
   };
 
   const fetchLatest = async (targetDate = null) => {
     if (!API_URL) return;
+    const dateQuery = targetDate || getTodayKST();
 
-    // 캐시 확인
-    if (targetDate && noticeCache[targetDate]) {
-      setData(noticeCache[targetDate]);
+    // 캐시 확인 (즉시 반환하여 로딩 방지)
+    if (noticeCache[dateQuery]) {
+      const cached = noticeCache[dateQuery];
+      setData(cached);
+      
       if (mode === 'admin') {
-        const cached = noticeCache[targetDate];
         setFormData({
-          noticeDate: targetDate,
-          workNotice: cached.업무안내,
-          safetyNotice: cached.안전교육,
-          prinToday: cached.교장_오늘,
-          vpToday: cached.교감_오늘,
-          prinNext: cached.교장_다음,
-          vpNext: cached.교감_다음
+          noticeDate: dateQuery,
+          workNotice: cached.업무안내 || '',
+          safetyNotice: cached.안전교육 || '',
+          prinToday: cached.교장_오늘 || 'O',
+          vpToday: cached.교감_오늘 || 'O',
+          prinNext: cached.교장_다음 || 'O',
+          vpNext: cached.교감_다음 || 'O'
         });
+      } else {
+        setFormData(prev => ({ ...prev, noticeDate: dateQuery }));
       }
-      // 캐시가 있어도 백그라운드에서 최신 데이터 확인 (사일런트 페치)
-      silentFetch(targetDate);
+      
+      // 백그라운드 업데이트
+      silentFetch(dateQuery);
       return;
     }
 
     setLoading(true);
     try {
-      const url = targetDate 
-        ? `${API_URL}?action=read&date=${targetDate}`
-        : `${API_URL}?action=read`;
+      const url = `${API_URL}?action=read&date=${dateQuery}`;
       const res = await fetch(url);
       const json = await res.json();
       
@@ -124,28 +139,19 @@ const App = () => {
         if (mode === 'admin') {
           setFormData({
             noticeDate: dateKey,
-            workNotice: json.data.업무안내,
-            safetyNotice: json.data.안전교육,
-            prinToday: json.data.교장_오늘,
-            vpToday: json.data.교감_오늘,
-            prinNext: json.data.교장_다음,
-            vpNext: json.data.교감_다음
+            workNotice: json.data.업무안내 || '',
+            safetyNotice: json.data.안전교육 || '',
+            prinToday: json.data.교장_오늘 || 'O',
+            vpToday: json.data.교감_오늘 || 'O',
+            prinNext: json.data.교장_다음 || 'O',
+            vpNext: json.data.교감_다음 || 'O'
           });
+        } else {
+          setFormData(prev => ({ ...prev, noticeDate: dateKey }));
         }
       } else {
         setData(null);
-        if (targetDate && mode === 'admin') {
-          setFormData(prev => ({
-            ...prev,
-            noticeDate: targetDate,
-            workNotice: '',
-            safetyNotice: '',
-            prinToday: 'O',
-            vpToday: 'O',
-            prinNext: 'O',
-            vpNext: 'O'
-          }));
-        }
+        setFormData(prev => ({ ...prev, noticeDate: dateQuery }));
       }
     } catch (err) {
       console.error("Fetch error:", err);

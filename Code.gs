@@ -36,16 +36,19 @@ function doGet(e) {
 function doPost(e) {
   const sheet = setupSheet();
   const data = JSON.parse(e.postData.contents);
-  const rows = sheet.getDataRange().getValues();
-  let rowIndex = -1;
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return; // 헤더만 있는 경우
 
-  // 특정 날짜가 이미 존재하는지 확인 (안내날짜는 3번째 열, 인덱스 2)
-  for (let i = 1; i < rows.length; i++) {
-    // 스프레드시트의 날짜 형식이 다를 수 있으므로 문자열로 비교
-    const cellValue = rows[i][2];
+  // 마지막 100개 행에서 검색 (성능 향상)
+  const startRowSearch = Math.max(2, lastRow - 99);
+  const searchNumRows = lastRow - startRowSearch + 1;
+  const rows = sheet.getRange(startRowSearch, 1, searchNumRows, HEADERS.length).getValues();
+  
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const cellValue = rows[i][2]; // 안내날짜
     const dateStr = cellValue instanceof Date ? Utilities.formatDate(cellValue, "GMT+9", "yyyy-MM-dd") : String(cellValue);
     if (dateStr === data.noticeDate) {
-      rowIndex = i + 1;
+      rowIndex = startRowSearch + i;
       break;
     }
   }
@@ -112,13 +115,17 @@ function getContent(targetDate) {
 
 function listContent(limit) {
   const sheet = setupSheet();
-  const rows = sheet.getDataRange().getValues();
-  if (rows.length <= 1) return createJsonResponse({ data: [] });
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return createJsonResponse({ data: [] });
   
-  const startIndex = Math.max(1, rows.length - limit);
+  const startRow = Math.max(2, lastRow - limit + 1);
+  const numRows = lastRow - startRow + 1;
+  
+  // 전체 대신 필요한 범위만 가져옴
+  const rows = sheet.getRange(startRow, 1, numRows, HEADERS.length).getValues();
   const result = [];
   
-  for (let i = rows.length - 1; i >= startIndex; i--) {
+  for (let i = rows.length - 1; i >= 0; i--) {
     const item = {};
     HEADERS.forEach((header, index) => {
       let value = rows[i][index];
