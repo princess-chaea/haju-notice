@@ -337,45 +337,45 @@ const App = () => {
                 </div>
 
                 <section className="pt-2">
-                  <h3 className="text-xs font-black text-slate-400 mb-5 flex items-center gap-3 uppercase tracking-[0.2em] before:content-[''] before:flex-1 before:h-px before:bg-slate-100 after:content-[''] after:flex-1 after:h-px after:bg-slate-100">
-                    관리자 복무현황
+                  <h3 className="text-[10px] font-black text-slate-400 mb-4 flex items-center gap-3 uppercase tracking-[0.2em] before:content-[''] before:flex-1 before:h-px before:bg-slate-100 after:content-[''] after:flex-1 after:h-px after:bg-slate-100">
+                    복무현황
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="bg-slate-50/50 border border-slate-100 rounded-[40px] p-6 shadow-inner overflow-hidden relative group transition-all hover:bg-white hover:shadow-lg">
-                      <div className="text-[10px] font-black text-blue-600 mb-4 uppercase tracking-[0.1em] opacity-60">Today (오늘)</div>
-                      <div className="space-y-4 relative z-10">
-                        <div className="flex justify-between items-center bg-white/80 backdrop-blur-md p-4 rounded-[28px] border border-white shadow-sm transition-all group-hover:shadow-md">
-                          <span className="text-xs font-black text-slate-500 tracking-tight">교장선생님</span>
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm font-black text-slate-800">{data.교장_오늘}</span>
-                            <div className="bg-slate-50 p-1.5 rounded-xl"><StatusIcon status={data.교장_오늘} /></div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-slate-50/50 border border-slate-100 rounded-[32px] p-4 group transition-all hover:bg-white hover:shadow-lg">
+                      <div className="text-[9px] font-black text-blue-600 mb-3 uppercase tracking-wider opacity-60 text-center">Today</div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center bg-white/80 p-2.5 rounded-2xl border border-white shadow-sm transition-all group-hover:shadow-md">
+                          <span className="text-[10px] font-bold text-slate-500">교장</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black text-slate-800">{data.교장_오늘}</span>
+                            <StatusIcon status={data.교장_오늘} />
                           </div>
                         </div>
-                        <div className="flex justify-between items-center bg-white/80 backdrop-blur-md p-4 rounded-[28px] border border-white shadow-sm transition-all group-hover:shadow-md">
-                          <span className="text-xs font-black text-slate-500 tracking-tight">교감선생님</span>
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm font-black text-slate-800">{data.교감_오늘}</span>
-                            <div className="bg-slate-50 p-1.5 rounded-xl"><StatusIcon status={data.교감_오늘} /></div>
+                        <div className="flex justify-between items-center bg-white/80 p-2.5 rounded-2xl border border-white shadow-sm transition-all group-hover:shadow-md">
+                          <span className="text-[10px] font-bold text-slate-500">교감</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black text-slate-800">{data.교감_오늘}</span>
+                            <StatusIcon status={data.교감_오늘} />
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-slate-50/50 border border-slate-100 rounded-[40px] p-6 shadow-inner overflow-hidden relative group transition-all hover:bg-white hover:shadow-lg">
-                      <div className="text-[10px] font-black text-emerald-600 mb-4 uppercase tracking-[0.1em] opacity-60">Next Day (다음 날)</div>
-                      <div className="space-y-4 relative z-10">
-                        <div className="flex justify-between items-center bg-white/80 backdrop-blur-md p-4 rounded-[28px] border border-white shadow-sm transition-all group-hover:shadow-md">
-                          <span className="text-xs font-black text-slate-500 tracking-tight">교장선생님</span>
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm font-black text-slate-800">{data.교장_다음}</span>
-                            <div className="bg-slate-50 p-1.5 rounded-xl"><StatusIcon status={data.교장_다음} /></div>
+                    <div className="bg-slate-50/50 border border-slate-100 rounded-[32px] p-4 group transition-all hover:bg-white hover:shadow-lg">
+                      <div className="text-[9px] font-black text-emerald-600 mb-3 uppercase tracking-wider opacity-60 text-center">Next Day</div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center bg-white/80 p-2.5 rounded-2xl border border-white shadow-sm transition-all group-hover:shadow-md">
+                          <span className="text-[10px] font-bold text-slate-500">교장</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black text-slate-800">{data.교장_다음}</span>
+                            <StatusIcon status={data.교장_다음} />
                           </div>
                         </div>
-                        <div className="flex justify-between items-center bg-white/80 backdrop-blur-md p-4 rounded-[28px] border border-white shadow-sm transition-all group-hover:shadow-md">
-                          <span className="text-xs font-black text-slate-500 tracking-tight">교감선생님</span>
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm font-black text-slate-800">{data.교감_다음}</span>
-                            <div className="bg-slate-50 p-1.5 rounded-xl"><StatusIcon status={data.교감_다음} /></div>
+                        <div className="flex justify-between items-center bg-white/80 p-2.5 rounded-2xl border border-white shadow-sm transition-all group-hover:shadow-md">
+                          <span className="text-[10px] font-bold text-slate-500">교감</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black text-slate-800">{data.교감_다음}</span>
+                            <StatusIcon status={data.교감_다음} />
                           </div>
                         </div>
                       </div>
@@ -387,35 +387,29 @@ const App = () => {
           )}
 
           {!loading && !data && (
-            <div className="flex flex-col items-center justify-center py-24 text-slate-300 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-              <div className="bg-slate-50 p-8 rounded-full border border-slate-100 shadow-inner">
-                <AlertCircle size={64} className="text-slate-200" />
+            <div className="flex flex-col items-center justify-center py-20 text-slate-300 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+              <div className="bg-slate-50 p-6 rounded-full border border-slate-100 shadow-inner">
+                <AlertCircle size={48} className="text-slate-200" />
               </div>
-              <div className="text-center space-y-3">
-                <p className="font-black text-xl text-slate-800 tracking-tight">등록된 공지사항이 없습니다.</p>
-                <p className="text-sm font-medium text-slate-400">선택하신 날짜({formData.noticeDate})의 내용을 찾을 수 없어요.</p>
+              <div className="text-center space-y-2">
+                <p className="font-black text-lg text-slate-800 tracking-tight">공지사항이 없습니다.</p>
+                <p className="text-xs font-medium text-slate-400">선택하신 날짜({formData.noticeDate})의 내용을 찾을 수 없어요.</p>
               </div>
               <div className="flex flex-col items-center gap-4 w-full max-w-xs">
-                <div className="w-full flex gap-2">
+                <div className="w-full flex gap-2 justify-center">
                   <input 
                     type="date" 
-                    className="flex-1 p-4 bg-slate-50 border-0 rounded-2xl shadow-inner text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono"
+                    className="p-3 bg-slate-50 border-0 rounded-2xl shadow-inner text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono"
                     onChange={(e) => fetchLatest(e.target.value)}
                     value={formData.noticeDate}
                   />
                   <button 
                     onClick={() => fetchLatest(getTodayKST())}
-                    className="px-6 bg-blue-600 text-white rounded-2xl font-black text-xs tracking-widest shadow-lg shadow-blue-100"
+                    className="px-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] tracking-widest shadow-lg shadow-blue-100"
                   >
                     오늘
                   </button>
                 </div>
-                <button
-                  onClick={() => setMode('admin')}
-                  className="w-full py-4 text-blue-600 font-black text-sm hover:underline tracking-tight bg-blue-50 rounded-2xl border border-blue-100 transition-all active:scale-95"
-                >
-                  새로운 공지사항 작성하러 가기
-                </button>
               </div>
             </div>
           )}
