@@ -35,18 +35,56 @@ const App = () => {
     if (params.get('admin') === 'true') setMode('admin');
   }, []);
 
-  const fetchLatest = async () => {
+  const fetchLatest = async (targetDate = null) => {
     if (!API_URL) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}?action=read`);
+      const url = targetDate 
+        ? `${API_URL}?action=read&date=${targetDate}`
+        : `${API_URL}?action=read`;
+      const res = await fetch(url);
       const json = await res.json();
-      setData(json.data);
+      
+      if (json.data) {
+        setData(json.data);
+        if (targetDate) {
+          setFormData({
+            noticeDate: json.data.안내날짜,
+            workNotice: json.data.업무안내,
+            safetyNotice: json.data.안전교육,
+            prinToday: json.data.교장_오늘,
+            vpToday: json.data.교감_오늘,
+            prinNext: json.data.교장_다음,
+            vpNext: json.data.교감_다음
+          });
+        }
+      } else {
+        if (targetDate) {
+          // 해당 날짜 데이터가 없으면 폼 초기화 (날짜는 유지)
+          setFormData({
+            noticeDate: targetDate,
+            workNotice: '',
+            safetyNotice: '',
+            prinToday: 'O',
+            vpToday: 'O',
+            prinNext: 'O',
+            vpNext: 'O'
+          });
+          setData(null);
+        } else {
+          setData(null);
+        }
+      }
     } catch (err) {
       console.error("Fetch error:", err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDateChange = (date) => {
+    setFormData(prev => ({ ...prev, noticeDate: date }));
+    fetchLatest(date);
   };
 
   const handleSave = async () => {
@@ -94,14 +132,13 @@ const App = () => {
         <div className="space-y-4 bg-white p-6 rounded-3xl shadow-md border border-slate-100">
           <div>
             <label className="block text-sm font-semibold mb-1.5 text-slate-700 flex items-center gap-1">
-              <Calendar size={14} className="text-slate-400" /> 안내 날짜
+              <Calendar size={14} className="text-slate-400" /> 안내 날짜 (기존 데이터 자동 로드)
             </label>
             <input
-              type="text"
-              placeholder="예: 3월 6일(금)"
+              type="date"
               className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
               value={formData.noticeDate}
-              onChange={e => setFormData({ ...formData, noticeDate: e.target.value })}
+              onChange={e => handleDateChange(e.target.value)}
             />
           </div>
 
@@ -209,11 +246,21 @@ const App = () => {
 
           {!loading && data && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-black text-slate-800 tracking-tight">
-                  <span className="text-blue-600">{data.안내날짜}</span> 공지사항
-                </h2>
-                <div className="text-[10px] font-bold text-slate-300 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded">Latest Update</div>
+              <div className="flex justify-between items-end mb-6">
+                <div>
+                  <h2 className="text-xl font-black text-slate-800 tracking-tight">
+                    <span className="text-blue-600">{data.안내날짜}</span> 공지사항
+                  </h2>
+                  <div className="text-[10px] font-bold text-slate-300 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded inline-block">Latest Update</div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                   <label className="text-[10px] font-bold text-slate-400">날짜 선택 이동</label>
+                   <input 
+                    type="date" 
+                    className="text-xs p-1 border border-slate-200 rounded bg-slate-50 outline-none focus:ring-1 focus:ring-blue-500"
+                    onChange={(e) => fetchLatest(e.target.value)}
+                   />
+                </div>
               </div>
 
               <div className="space-y-6">
@@ -286,15 +333,22 @@ const App = () => {
           )}
 
           {!loading && !data && (
-            <div className="flex flex-col items-center justify-center py-24 text-slate-300 gap-4">
+            <div className="flex flex-col items-center justify-center py-20 text-slate-300 gap-4">
               <AlertCircle size={48} className="text-slate-200" />
-              <p className="font-bold text-lg">최근 등록된 공지사항이 없습니다.</p>
-              <button
-                onClick={() => setMode('admin')}
-                className="mt-2 text-blue-500 font-bold hover:underline"
-              >
-                첫 번째 공지사항 등록하기
-              </button>
+              <p className="font-bold text-lg text-center">선택하신 날짜({formData.noticeDate})에<br/>등록된 공지사항이 없습니다.</p>
+              <div className="flex flex-col items-center gap-4">
+                <input 
+                  type="date" 
+                  className="p-2 border border-slate-200 rounded-lg text-slate-600"
+                  onChange={(e) => fetchLatest(e.target.value)}
+                />
+                <button
+                  onClick={() => setMode('admin')}
+                  className="text-blue-500 font-bold hover:underline"
+                >
+                  새 공지사항 등록하기
+                </button>
+              </div>
             </div>
           )}
         </div>
