@@ -37,19 +37,21 @@ function doPost(e) {
   const sheet = setupSheet();
   const data = JSON.parse(e.postData.contents);
   const lastRow = sheet.getLastRow();
-  if (lastRow <= 1) return; // 헤더만 있는 경우
+  let rowIndex = -1;
 
-  // 마지막 100개 행에서 검색 (성능 향상)
-  const startRowSearch = Math.max(2, lastRow - 99);
-  const searchNumRows = lastRow - startRowSearch + 1;
-  const rows = sheet.getRange(startRowSearch, 1, searchNumRows, HEADERS.length).getValues();
-  
-  for (let i = rows.length - 1; i >= 0; i--) {
-    const cellValue = rows[i][2]; // 안내날짜
-    const dateStr = cellValue instanceof Date ? Utilities.formatDate(cellValue, "GMT+9", "yyyy-MM-dd") : String(cellValue);
-    if (dateStr === data.noticeDate) {
-      rowIndex = startRowSearch + i;
-      break;
+  if (lastRow > 1) {
+    // 마지막 100개 행에서 검색 (성능 향상)
+    const startRowSearch = Math.max(2, lastRow - 99);
+    const searchNumRows = lastRow - startRowSearch + 1;
+    const rows = sheet.getRange(startRowSearch, 1, searchNumRows, HEADERS.length).getValues();
+    
+    for (let i = rows.length - 1; i >= 0; i--) {
+      const cellValue = rows[i][2]; // 안내날짜
+      const dateStr = cellValue instanceof Date ? Utilities.formatDate(cellValue, "GMT+9", "yyyy-MM-dd") : String(cellValue);
+      if (dateStr === data.noticeDate) {
+        rowIndex = startRowSearch + i;
+        break;
+      }
     }
   }
   
@@ -60,8 +62,8 @@ function doPost(e) {
     Utilities.getUuid(),
     nowKST,
     data.noticeDate,
-    data.workNotice,
-    data.safetyNotice,
+    data.일정안내,
+    data.업무안내,
     data.prinToday,
     data.vpToday,
     data.prinNext,
@@ -74,8 +76,7 @@ function doPost(e) {
     sheet.appendRow(rowData);
   }
   
-  return ContentService.createTextOutput(JSON.stringify({ status: 'success' }))
-    .setMimeType(ContentService.MimeType.JSON);
+  return createJsonResponse({ status: 'success' });
 }
 
 function getContent(targetDate) {

@@ -23,6 +23,15 @@ const App = () => {
   const [mode, setMode] = useState('view'); // 'view' or 'admin'
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
+  const [statusMessage, setStatusMessage] = useState(null);
+
+  // 메시지 표시 후 3초 뒤 삭제
+  useEffect(() => {
+    if (statusMessage) {
+      const timer = setTimeout(() => setStatusMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [statusMessage]);
 
   // 폼 상태
   const [formData, setFormData] = useState({
@@ -196,18 +205,18 @@ const App = () => {
   };
 
   const handleSave = async () => {
-    if (!API_URL) return alert("API URL을 설정해주세요.");
+    if (!API_URL) return setStatusMessage({ type: 'error', text: "API URL을 설정해주세요." });
     setLoading(true);
     try {
       await fetch(API_URL, {
         method: 'POST',
         body: JSON.stringify(formData)
       });
-      alert("공지사항이 등록되었습니다.");
+      setStatusMessage({ type: 'success', text: "공지사항이 등록되었습니다." });
       setMode('view');
       fetchLatest();
     } catch (err) {
-      alert("저장 실패");
+      setStatusMessage({ type: 'error', text: "저장 실패" });
     } finally {
       setLoading(false);
     }
@@ -325,6 +334,20 @@ const App = () => {
     <div className="p-2 sm:p-4 bg-slate-50 min-h-screen flex items-center justify-center font-sans lg:p-10">
       <div className="bg-white max-w-2xl w-full rounded-[32px] sm:rounded-[48px] shadow-2xl shadow-blue-900/10 overflow-hidden border border-slate-100 relative transition-all duration-700">
         
+        {/* 상태 메시지 알림 (토스트) */}
+        {statusMessage && (
+          <div className="fixed top-10 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className={`px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur-md border ${
+              statusMessage.type === 'success' 
+                ? 'bg-emerald-500/90 text-white border-emerald-400' 
+                : 'bg-red-500/90 text-white border-red-400'
+            }`}>
+              {statusMessage.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+              <span className="font-bold text-sm">{statusMessage.text}</span>
+            </div>
+          </div>
+        )}
+
         <div className="p-5 sm:p-8 relative">
           {loading && (
             <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-5 bg-white/50 backdrop-blur-sm relative z-20">
