@@ -43,11 +43,10 @@ function doPost(e) {
     // 마지막 100개 행에서 검색 (성능 향상)
     const startRowSearch = Math.max(2, lastRow - 99);
     const searchNumRows = lastRow - startRowSearch + 1;
-    const rows = sheet.getRange(startRowSearch, 1, searchNumRows, HEADERS.length).getValues();
+    const rows = sheet.getRange(startRowSearch, 1, searchNumRows, HEADERS.length).getDisplayValues();
     
     for (let i = rows.length - 1; i >= 0; i--) {
-      const cellValue = rows[i][2]; // 안내날짜
-      const dateStr = cellValue instanceof Date ? Utilities.formatDate(cellValue, "GMT+9", "yyyy-MM-dd") : String(cellValue);
+      const dateStr = rows[i][2]; // 안내날짜 (getDisplayValues로 인해 무조건 문자열)
       if (dateStr === data.noticeDate) {
         rowIndex = startRowSearch + i;
         break;
@@ -81,7 +80,7 @@ function doPost(e) {
 
 function getContent(targetDate) {
   const sheet = setupSheet();
-  const rows = sheet.getDataRange().getValues();
+  const rows = sheet.getDataRange().getDisplayValues();
   if (rows.length <= 1) return createJsonResponse({ data: null });
   
   let targetRow = rows[rows.length - 1]; // 기본값: 마지막 행
@@ -89,8 +88,7 @@ function getContent(targetDate) {
   if (targetDate) {
     targetRow = null; 
     for (let i = rows.length - 1; i >= 1; i--) {
-      const cellValue = rows[i][2];
-      const dateStr = cellValue instanceof Date ? Utilities.formatDate(cellValue, "GMT+9", "yyyy-MM-dd") : String(cellValue);
+      const dateStr = rows[i][2];
       if (dateStr === targetDate) {
         targetRow = rows[i];
         break;
@@ -103,12 +101,7 @@ function getContent(targetDate) {
   
   const result = {};
   HEADERS.forEach((header, index) => {
-    let value = targetRow[index];
-    // 날짜 객체 데이터는 문자열로 변환 (안내날짜 등)
-    if (value instanceof Date) {
-      value = Utilities.formatDate(value, "GMT+9", index === 1 ? "yyyy-MM-dd HH:mm:ss" : "yyyy-MM-dd");
-    }
-    result[header] = value;
+    result[header] = targetRow[index];
   });
   
   return createJsonResponse({ data: result });
@@ -123,17 +116,13 @@ function listContent(limit) {
   const numRows = lastRow - startRow + 1;
   
   // 전체 대신 필요한 범위만 가져옴
-  const rows = sheet.getRange(startRow, 1, numRows, HEADERS.length).getValues();
+  const rows = sheet.getRange(startRow, 1, numRows, HEADERS.length).getDisplayValues();
   const result = [];
   
   for (let i = rows.length - 1; i >= 0; i--) {
     const item = {};
     HEADERS.forEach((header, index) => {
-      let value = rows[i][index];
-      if (value instanceof Date) {
-        value = Utilities.formatDate(value, "GMT+9", index === 1 ? "yyyy-MM-dd HH:mm:ss" : "yyyy-MM-dd");
-      }
-      item[header] = value;
+      item[header] = rows[i][index];
     });
     result.push(item);
   }
