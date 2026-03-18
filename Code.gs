@@ -25,6 +25,11 @@ function doGet(e) {
     return getContent(date);
   }
   
+  if (action === 'list') {
+    const limit = parseInt(e.parameter.limit || '30');
+    return listContent(limit);
+  }
+  
   return ContentService.createTextOutput("API is running").setMimeType(ContentService.MimeType.TEXT);
 }
 
@@ -101,6 +106,29 @@ function getContent(targetDate) {
     }
     result[header] = value;
   });
+  
+  return createJsonResponse({ data: result });
+}
+
+function listContent(limit) {
+  const sheet = setupSheet();
+  const rows = sheet.getDataRange().getValues();
+  if (rows.length <= 1) return createJsonResponse({ data: [] });
+  
+  const startIndex = Math.max(1, rows.length - limit);
+  const result = [];
+  
+  for (let i = rows.length - 1; i >= startIndex; i--) {
+    const item = {};
+    HEADERS.forEach((header, index) => {
+      let value = rows[i][index];
+      if (value instanceof Date) {
+        value = Utilities.formatDate(value, "GMT+9", index === 1 ? "yyyy-MM-dd HH:mm:ss" : "yyyy-MM-dd");
+      }
+      item[header] = value;
+    });
+    result.push(item);
+  }
   
   return createJsonResponse({ data: result });
 }

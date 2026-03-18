@@ -43,14 +43,71 @@ const App = () => {
     { label: '△ (연가)', value: '△(연가)' },
   ];
 
+  const [noticeCache, setNoticeCache] = useState({});
+
   useEffect(() => {
-    fetchLatest();
+    // 초기 로드 시 대량의 데이터를 미리 가져와 캐시 채우기
+    initFetch();
     const params = new URLSearchParams(window.location.search);
     if (params.get('admin') === 'true') setMode('admin');
   }, []);
 
+  const initFetch = async () => {
+    if (!API_URL) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}?action=list&limit=30`);
+      const json = await res.json();
+      if (json.data && Array.isArray(json.data)) {
+        const newCache = {};
+        json.data.forEach(item => {
+          const dateKey = formatDateString(item.안내날짜);
+          newCache[dateKey] = item;
+        });
+        setNoticeCache(newCache);
+        
+        // 오늘 날짜 데이터가 있으면 기본값으로 설정
+        const today = getTodayKST();
+        if (newCache[today]) {
+          setData(newCache[today]);
+        } else {
+          // 오늘 데이터 없으면 가장 최근 데이터 보여주기
+          setData(json.data[0]);
+          if (json.data[0]) {
+            setFormData(prev => ({ ...prev, noticeDate: formatDateString(json.data[0].안내날짜) }));
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Init fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchLatest = async (targetDate = null) => {
     if (!API_URL) return;
+
+    // 캐시 확인
+    if (targetDate && noticeCache[targetDate]) {
+      setData(noticeCache[targetDate]);
+      if (mode === 'admin') {
+        const cached = noticeCache[targetDate];
+        setFormData({
+          noticeDate: targetDate,
+          workNotice: cached.업무안내,
+          safetyNotice: cached.안전교육,
+          prinToday: cached.교장_오늘,
+          vpToday: cached.교감_오늘,
+          prinNext: cached.교장_다음,
+          vpNext: cached.교감_다음
+        });
+      }
+      // 캐시가 있어도 백그라운드에서 최신 데이터 확인 (사일런트 페치)
+      silentFetch(targetDate);
+      return;
+    }
+
     setLoading(true);
     try {
       const url = targetDate 
@@ -61,9 +118,12 @@ const App = () => {
       
       if (json.data) {
         setData(json.data);
-        if (targetDate && mode === 'admin') {
+        const dateKey = formatDateString(json.data.안내날짜);
+        setNoticeCache(prev => ({ ...prev, [dateKey]: json.data }));
+        
+        if (mode === 'admin') {
           setFormData({
-            noticeDate: formatDateString(json.data.안내날짜),
+            noticeDate: dateKey,
             workNotice: json.data.업무안내,
             safetyNotice: json.data.안전교육,
             prinToday: json.data.교장_오늘,
@@ -92,6 +152,22 @@ const App = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const silentFetch = async (targetDate) => {
+    try {
+      const url = `${API_URL}?action=read&date=${targetDate}`;
+      const res = await fetch(url);
+      const json = await res.json();
+      if (json.data) {
+        const dateKey = formatDateString(json.data.안내날짜);
+        setNoticeCache(prev => ({ ...prev, [dateKey]: json.data }));
+        // 현재 보고 있는 날짜와 같으면 데이터 업데이트
+        if (formatDateString(formData.noticeDate) === dateKey) {
+          setData(json.data);
+        }
+      }
+    } catch (e) {}
   };
 
   const handleDateChange = (date) => {
@@ -237,126 +313,106 @@ const App = () => {
             </div>
           )}
 
-          {!loading && data && (
+          {!loading && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10">
-              <div className="flex flex-col gap-6 mb-8">
-                <div className="flex justify-between items-center bg-slate-50/50 p-3 rounded-[28px] border border-slate-100 gap-2">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-100 shrink-0">
-                      <Calendar size={18} />
-                    </div>
-                    <div className="flex items-center gap-1.5 flex-1 min-w-0 font-black text-blue-600">
-                      <input 
-                        type="date" 
-                        className="bg-transparent border-0 p-0 text-lg font-black text-blue-600 outline-none focus:ring-0 w-[130px] shrink-0"
-                        onChange={(e) => fetchLatest(e.target.value)}
-                        value={formatDateString(data.안내날짜)}
-                      />
-                      <span className="text-slate-400 opacity-50 font-normal hidden xs:inline">소식</span>
-                    </div>
+              {/* 상단 통합 헤더 (공통 내비게이션) */}
+              <div className="flex justify-between items-center bg-slate-50/50 p-3 rounded-[28px] border border-slate-100 gap-2 mb-6">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-100 shrink-0">
+                    <Calendar size={18} />
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button 
-                      onClick={() => fetchLatest(getTodayKST())}
-                      className="bg-slate-800 text-white px-3 py-2 rounded-xl text-[9px] font-black tracking-widest uppercase hover:bg-slate-900 transition-all active:scale-95"
-                    >
-                      TODAY
-                    </button>
-                    <button
-                      onClick={() => setMode('admin')}
-                      className="p-2.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-300 hover:text-blue-600 transition-all active:scale-90 shadow-sm"
-                      title="관리자 설정"
-                    >
-                      <ShieldAlert size={18} />
-                    </button>
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0 font-black text-blue-600">
+                    <input 
+                      type="date" 
+                      className="bg-transparent border-0 p-0 text-lg font-black text-blue-600 outline-none focus:ring-0 w-[130px] shrink-0 pointer-events-auto"
+                      onChange={(e) => handleDateChange(e.target.value)}
+                      value={formData.noticeDate}
+                    />
+                    <span className="text-slate-400 opacity-50 font-normal hidden xs:inline">소식</span>
                   </div>
                 </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-blue-50/30 p-3 rounded-[24px] border border-blue-100/30 flex flex-col items-center gap-2">
-                    <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest opacity-70">Today</span>
-                    <div className="flex gap-3 w-full justify-center">
-                      <div className="flex items-center gap-1.5 bg-white/60 px-2.5 py-1 rounded-lg border border-white">
-                        <span className="text-[9px] font-bold text-slate-400">교장</span>
-                        <StatusIcon status={data.교장_오늘} />
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-white/60 px-2.5 py-1 rounded-lg border border-white">
-                        <span className="text-[9px] font-bold text-slate-400">교감</span>
-                        <StatusIcon status={data.교감_오늘} />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-emerald-50/30 p-3 rounded-[24px] border border-emerald-100/30 flex flex-col items-center gap-2">
-                    <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest opacity-70">Next Day</span>
-                    <div className="flex gap-3 w-full justify-center">
-                      <div className="flex items-center gap-1.5 bg-white/60 px-2.5 py-1 rounded-lg border border-white">
-                        <span className="text-[9px] font-bold text-slate-400">교장</span>
-                        <StatusIcon status={data.교장_다음} />
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-white/60 px-2.5 py-1 rounded-lg border border-white">
-                        <span className="text-[9px] font-bold text-slate-400">교감</span>
-                        <StatusIcon status={data.교감_다음} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-
-              </div>
-
-              <div className="space-y-4">
-                <section className="bg-gradient-to-br from-blue-50/50 to-indigo-50/50 p-5 rounded-[28px] border border-blue-100/30">
-                  <h3 className="flex items-center gap-2 text-[10px] font-black text-blue-600 mb-2.5 uppercase tracking-widest">
-                    <Briefcase size={14} /> 업무안내
-                  </h3>
-                  <div className="text-[15px] sm:text-[16px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed min-h-[100px]">
-                    {data.업무안내 || '등록된 업무 안내가 없습니다.'}
-                  </div>
-                </section>
-
-                <section className="bg-gradient-to-br from-orange-50/50 to-amber-50/50 p-5 rounded-[28px] border border-orange-100/30">
-                  <h3 className="flex items-center gap-2 text-[10px] font-black text-orange-600 mb-2.5 uppercase tracking-widest">
-                    <ShieldAlert size={14} /> 안전교육
-                  </h3>
-                  <div className="text-[15px] sm:text-[16px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed min-h-[60px]">
-                    {data.안전교육 || '등록된 안전 교육 내용이 없습니다.'}
-                  </div>
-                </section>
-              </div>
-            </div>
-          )}
-
-          {!loading && !data && (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-300 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-              <div className="bg-slate-50 p-6 rounded-full border border-slate-100 shadow-inner">
-                <AlertCircle size={48} className="text-slate-200" />
-              </div>
-              <div className="text-center space-y-2">
-                <p className="font-black text-lg text-slate-800 tracking-tight">공지사항이 없습니다.</p>
-                <p className="text-xs font-medium text-slate-400">선택하신 날짜({formData.noticeDate})의 내용을 찾을 수 없어요.</p>
-              </div>
-              <div className="flex flex-col items-center gap-4 w-full max-w-xs">
-                <div className="w-full flex gap-2 justify-center">
-                  <input 
-                    type="date" 
-                    className="p-3 bg-slate-50 border-0 rounded-2xl shadow-inner text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono"
-                    onChange={(e) => fetchLatest(e.target.value)}
-                    value={formData.noticeDate}
-                  />
+                <div className="flex items-center gap-2 shrink-0">
                   <button 
-                    onClick={() => fetchLatest(getTodayKST())}
-                    className="px-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] tracking-widest shadow-lg shadow-blue-100"
+                    onClick={() => handleDateChange(getTodayKST())}
+                    className="bg-slate-800 text-white px-3 py-2 rounded-xl text-[9px] font-black tracking-widest uppercase hover:bg-slate-900 transition-all active:scale-95"
                   >
-                    오늘
+                    TODAY
+                  </button>
+                  <button
+                    onClick={() => setMode('admin')}
+                    className="p-2.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-300 hover:text-blue-600 transition-all active:scale-90 shadow-sm"
+                    title="관리자 설정"
+                  >
+                    <ShieldAlert size={18} />
                   </button>
                 </div>
-                <button
-                  onClick={() => setMode('admin')}
-                  className="w-full py-4 text-blue-600 font-black text-sm hover:underline tracking-tight bg-blue-50 rounded-2xl border border-blue-100 transition-all active:scale-95 flex items-center justify-center gap-2"
-                >
-                  <ShieldAlert size={16} /> 환경 설정 (관리자)
-                </button>
               </div>
+
+              {data ? (
+                <div className="space-y-6">
+                  {/* 복무현황 유닛 */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-blue-50/30 p-3 rounded-[24px] border border-blue-100/30 flex flex-col items-center gap-2">
+                      <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest opacity-70">Today</span>
+                      <div className="flex gap-3 w-full justify-center">
+                        <div className="flex items-center gap-1.5 bg-white/60 px-2.5 py-1 rounded-lg border border-white">
+                          <span className="text-[9px] font-bold text-slate-400">교장</span>
+                          <StatusIcon status={data.교장_오늘} />
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-white/60 px-2.5 py-1 rounded-lg border border-white">
+                          <span className="text-[9px] font-bold text-slate-400">교감</span>
+                          <StatusIcon status={data.교감_오늘} />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-emerald-50/30 p-3 rounded-[24px] border border-emerald-100/30 flex flex-col items-center gap-2">
+                      <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest opacity-70">Next Day</span>
+                      <div className="flex gap-3 w-full justify-center">
+                        <div className="flex items-center gap-1.5 bg-white/60 px-2.5 py-1 rounded-lg border border-white">
+                          <span className="text-[9px] font-bold text-slate-400">교장</span>
+                          <StatusIcon status={data.교장_다음} />
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-white/60 px-2.5 py-1 rounded-lg border border-white">
+                          <span className="text-[9px] font-bold text-slate-400">교감</span>
+                          <StatusIcon status={data.교감_다음} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 공지 내용 */}
+                  <div className="space-y-4">
+                    <section className="bg-gradient-to-br from-blue-50/50 to-indigo-50/50 p-5 rounded-[28px] border border-blue-100/30">
+                      <h3 className="flex items-center gap-2 text-[10px] font-black text-blue-600 mb-2.5 uppercase tracking-widest">
+                        <Briefcase size={14} /> 업무안내
+                      </h3>
+                      <div className="text-[15px] sm:text-[16px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed min-h-[100px]">
+                        {data.업무안내 || '등록된 업무 안내가 없습니다.'}
+                      </div>
+                    </section>
+
+                    <section className="bg-gradient-to-br from-orange-50/50 to-amber-50/50 p-5 rounded-[28px] border border-orange-100/30">
+                      <h3 className="flex items-center gap-2 text-[10px] font-black text-orange-600 mb-2.5 uppercase tracking-widest">
+                        <ShieldAlert size={14} /> 안전교육
+                      </h3>
+                      <div className="text-[15px] sm:text-[16px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed min-h-[60px]">
+                        {data.안전교육 || '등록된 안전 교육 내용이 없습니다.'}
+                      </div>
+                    </section>
+                  </div>
+                </div>
+              ) : (
+                /* 단순화된 공지 없음 상태 */
+                <div className="flex flex-col items-center justify-center py-16 text-slate-300 gap-4">
+                  <div className="bg-slate-50 p-5 rounded-full border border-slate-100">
+                    <AlertCircle size={40} className="text-slate-200" />
+                  </div>
+                  <div className="text-center space-y-1">
+                    <p className="font-black text-lg text-slate-800 tracking-tight">공지사항이 없습니다.</p>
+                    <p className="text-xs font-medium text-slate-400">선택하신 날짜({formData.noticeDate})의 내용을 찾을 수 없어요.</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
