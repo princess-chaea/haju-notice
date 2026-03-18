@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { Calendar, ShieldAlert, Briefcase, CheckCircle2, XCircle, AlertCircle, Save, Clock } from 'lucide-react';
 
 // 구글 앱스 스크립트 배포 후 받은 웹 앱 URL을 여기에 넣으세요.
