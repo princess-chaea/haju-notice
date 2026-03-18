@@ -36,15 +36,21 @@ function doPost(e) {
 
   // 특정 날짜가 이미 존재하는지 확인 (안내날짜는 3번째 열, 인덱스 2)
   for (let i = 1; i < rows.length; i++) {
-    if (rows[i][2] === data.noticeDate) {
+    // 스프레드시트의 날짜 형식이 다를 수 있으므로 문자열로 비교
+    const cellValue = rows[i][2];
+    const dateStr = cellValue instanceof Date ? Utilities.formatDate(cellValue, "GMT+9", "yyyy-MM-dd") : String(cellValue);
+    if (dateStr === data.noticeDate) {
       rowIndex = i + 1;
       break;
     }
   }
   
+  // 입력일시를 KST로 저장
+  const nowKST = Utilities.formatDate(new Date(), "GMT+9", "yyyy-MM-dd HH:mm:ss");
+  
   const rowData = [
     Utilities.getUuid(),
-    new Date(),
+    nowKST,
     data.noticeDate,
     data.workNotice,
     data.safetyNotice,
@@ -55,10 +61,8 @@ function doPost(e) {
   ];
   
   if (rowIndex > 0) {
-    // 기존 데이터 업데이트
     sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
   } else {
-    // 새 데이터 추가
     sheet.appendRow(rowData);
   }
   
@@ -74,22 +78,28 @@ function getContent(targetDate) {
   let targetRow = rows[rows.length - 1]; // 기본값: 마지막 행
 
   if (targetDate) {
-    // 특정 날짜 찾기 (역순으로 검색하여 가장 최근 것 찾기)
+    targetRow = null; 
     for (let i = rows.length - 1; i >= 1; i--) {
-      if (rows[i][2] === targetDate) {
+      const cellValue = rows[i][2];
+      const dateStr = cellValue instanceof Date ? Utilities.formatDate(cellValue, "GMT+9", "yyyy-MM-dd") : String(cellValue);
+      if (dateStr === targetDate) {
         targetRow = rows[i];
         break;
       }
     }
-    // 날짜를 지정했는데 못 찾으면 null 반환하거나 적절히 처리 (여기선 null)
-    if (targetRow[2] !== targetDate) {
+    if (!targetRow) {
       return createJsonResponse({ data: null });
     }
   }
   
   const result = {};
   HEADERS.forEach((header, index) => {
-    result[header] = targetRow[index];
+    let value = targetRow[index];
+    // 날짜 객체 데이터는 문자열로 변환 (안내날짜 등)
+    if (value instanceof Date) {
+      value = Utilities.formatDate(value, "GMT+9", index === 1 ? "yyyy-MM-dd HH:mm:ss" : "yyyy-MM-dd");
+    }
+    result[header] = value;
   });
   
   return createJsonResponse({ data: result });
