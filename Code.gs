@@ -1,5 +1,5 @@
 const SHEET_NAME = '공지사항_데이터';
-const HEADERS = ['ID', '입력일시', '안내날짜', '일정안내', '업무안내', '교장_오늘', '교감_오늘', '교장_다음', '교감_다음'];
+const HEADERS = ['ID', '입력일시', '안내날짜', '일정안내', '업무안내', '안전교육', '교장_오늘', '교감_오늘', '교장_다음', '교감_다음'];
 
 function setupSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -63,6 +63,7 @@ function doPost(e) {
     data.noticeDate,
     data.일정안내,
     data.업무안내,
+    data.안전교육,
     data.prinToday,
     data.vpToday,
     data.prinNext,

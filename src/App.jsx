@@ -45,6 +45,7 @@ const App = () => {
     noticeDate: getTodayKST(),
     일정안내: '',
     업무안내: '',
+    안전교육: '',
     prinToday: 'O',
     vpToday: 'O',
     prinNext: 'O',
@@ -128,6 +129,7 @@ const App = () => {
           noticeDate: dateQuery,
           일정안내: cached.일정안내 || '',
           업무안내: cached.업무안내 || '',
+          안전교육: cached.안전교육 || '',
           prinToday: cached.교장_오늘 || 'O',
           vpToday: cached.교감_오늘 || 'O',
           prinNext: cached.교장_다음 || 'O',
@@ -158,6 +160,7 @@ const App = () => {
             noticeDate: dateKey,
             일정안내: json.data.일정안내 || '',
             업무안내: json.data.업무안내 || '',
+            안전교육: json.data.안전교육 || '',
             prinToday: json.data.교장_오늘 || 'O',
             vpToday: json.data.교감_오늘 || 'O',
             prinNext: json.data.교장_다음 || 'O',
@@ -174,6 +177,7 @@ const App = () => {
             noticeDate: dateQuery,
             일정안내: '',
             업무안내: '',
+            안전교육: '',
             prinToday: 'O',
             vpToday: 'O',
             prinNext: 'O',
@@ -220,7 +224,6 @@ const App = () => {
         body: JSON.stringify(formData)
       });
       setStatusMessage({ type: 'success', text: "공지사항이 등록되었습니다." });
-      setMode('view');
       fetchLatest();
     } catch (err) {
       setStatusMessage({ type: 'error', text: "저장 실패" });
@@ -296,6 +299,17 @@ const App = () => {
               className="w-full p-4 border-0 bg-slate-50 rounded-2xl h-24 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none text-[15px] leading-relaxed shadow-inner"
               value={formData.업무안내}
               onChange={e => setFormData({ ...formData, 업무안내: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-slate-500 ml-1 flex items-center gap-1.5">
+              <ShieldAlert size={12} className="text-red-500" /> 안전 교육
+            </label>
+            <textarea
+              className="w-full p-4 border-0 bg-slate-50 rounded-2xl h-24 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none text-[15px] leading-relaxed shadow-inner"
+              value={formData.안전교육}
+              onChange={e => setFormData({ ...formData, 안전교육: e.target.value })}
             />
           </div>
 
@@ -432,23 +446,44 @@ const App = () => {
 
                   {/* 공지 내용 */}
                   <div className="space-y-4">
-                    <section className="bg-gradient-to-br from-blue-50/50 to-indigo-50/50 p-5 rounded-[28px] border border-blue-100/30">
-                      <h3 className="flex items-center gap-2 text-[10px] font-black text-blue-600 mb-2.5 uppercase tracking-widest">
-                        <Clock size={14} /> 일정안내
-                      </h3>
-                      <div className="text-[15px] sm:text-[16px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed min-h-[100px]">
-                        {data.일정안내 || '등록된 일정 안내가 없습니다.'}
-                      </div>
-                    </section>
+                    {data.일정안내 && (
+                      <section className="bg-gradient-to-br from-blue-50/50 to-indigo-50/50 p-5 rounded-[28px] border border-blue-100/30">
+                        <h3 className="flex items-center gap-2 text-[10px] font-black text-blue-600 mb-2.5 uppercase tracking-widest">
+                          <Clock size={14} /> 일정안내
+                        </h3>
+                        <div className="text-[15px] sm:text-[16px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed min-h-[60px]">
+                          {data.일정안내}
+                        </div>
+                      </section>
+                    )}
 
-                    <section className="bg-gradient-to-br from-orange-50/50 to-amber-50/50 p-5 rounded-[28px] border border-orange-100/30">
-                      <h3 className="flex items-center gap-2 text-[10px] font-black text-orange-600 mb-2.5 uppercase tracking-widest">
-                        <Briefcase size={14} /> 업무안내
-                      </h3>
-                      <div className="text-[15px] sm:text-[16px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed min-h-[60px]">
-                        {data.업무안내 || '등록된 업무 안내가 없습니다.'}
+                    {data.업무안내 && (
+                      <section className="bg-gradient-to-br from-orange-50/50 to-amber-50/50 p-5 rounded-[28px] border border-orange-100/30">
+                        <h3 className="flex items-center gap-2 text-[10px] font-black text-orange-600 mb-2.5 uppercase tracking-widest">
+                          <Briefcase size={14} /> 업무안내
+                        </h3>
+                        <div className="text-[15px] sm:text-[16px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed min-h-[60px]">
+                          {data.업무안내}
+                        </div>
+                      </section>
+                    )}
+
+                    {data.안전교육 && (
+                      <section className="bg-gradient-to-br from-red-50/50 to-rose-50/50 p-5 rounded-[28px] border border-red-100/30">
+                        <h3 className="flex items-center gap-2 text-[10px] font-black text-red-600 mb-2.5 uppercase tracking-widest">
+                          <ShieldAlert size={14} /> 안전교육
+                        </h3>
+                        <div className="text-[15px] sm:text-[16px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed min-h-[60px]">
+                          {data.안전교육}
+                        </div>
+                      </section>
+                    )}
+                    
+                    {(!data.일정안내 && !data.업무안내 && !data.안전교육) && (
+                      <div className="text-center py-10 bg-slate-50/50 rounded-[28px] border border-slate-100">
+                        <p className="text-sm font-bold text-slate-400">등록된 세부 내용이 없습니다.</p>
                       </div>
-                    </section>
+                    )}
                   </div>
                 </div>
               ) : (
