@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, ShieldAlert, Briefcase, CheckCircle2, XCircle, AlertCircle, Save } from 'lucide-react';
+import { Calendar, ShieldAlert, Briefcase, CheckCircle2, XCircle, AlertCircle, Save, Clock } from 'lucide-react';
 
 // 구글 앱스 스크립트 배포 후 받은 웹 앱 URL을 여기에 넣으세요.
 const API_URL = "https://script.google.com/macros/s/AKfycbytucGRbKU4rU_TzC9wCcF3YkUEYrpUp2Uh-dBB-SVonv4lQF7zmQuiB1erHl_EvYIU7w/exec";
@@ -27,8 +26,8 @@ const App = () => {
   // 폼 상태
   const [formData, setFormData] = useState({
     noticeDate: getTodayKST(),
-    workNotice: '',
-    safetyNotice: '',
+    일정안내: '',
+    업무안내: '',
     prinToday: 'O',
     vpToday: 'O',
     prinNext: 'O',
@@ -107,10 +106,11 @@ const App = () => {
       setData(cached);
       
       if (mode === 'admin') {
+        const cached = noticeCache[dateQuery];
         setFormData({
           noticeDate: dateQuery,
-          workNotice: cached.업무안내 || '',
-          safetyNotice: cached.안전교육 || '',
+          일정안내: cached.일정안내 || '',
+          업무안내: cached.업무안내 || '',
           prinToday: cached.교장_오늘 || 'O',
           vpToday: cached.교감_오늘 || 'O',
           prinNext: cached.교장_다음 || 'O',
@@ -139,8 +139,8 @@ const App = () => {
         if (mode === 'admin') {
           setFormData({
             noticeDate: dateKey,
-            workNotice: json.data.업무안내 || '',
-            safetyNotice: json.data.안전교육 || '',
+            일정안내: json.data.일정안내 || '',
+            업무안내: json.data.업무안내 || '',
             prinToday: json.data.교장_오늘 || 'O',
             vpToday: json.data.교감_오늘 || 'O',
             prinNext: json.data.교장_다음 || 'O',
@@ -151,7 +151,20 @@ const App = () => {
         }
       } else {
         setData(null);
-        setFormData(prev => ({ ...prev, noticeDate: dateQuery }));
+        if (mode === 'admin') {
+          setFormData(prev => ({
+            ...prev,
+            noticeDate: dateQuery,
+            일정안내: '',
+            업무안내: '',
+            prinToday: 'O',
+            vpToday: 'O',
+            prinNext: 'O',
+            vpNext: 'O'
+          }));
+        } else {
+          setFormData(prev => ({ ...prev, noticeDate: dateQuery }));
+        }
       }
     } catch (err) {
       console.error("Fetch error:", err);
@@ -249,23 +262,23 @@ const App = () => {
 
           <div className="space-y-1.5 pt-2">
             <label className="block text-xs font-bold text-slate-500 ml-1 flex items-center gap-1.5">
-              <Briefcase size={12} className="text-blue-500" /> 업무 안내
+              <Clock size={12} className="text-blue-500" /> 일정 안내
             </label>
             <textarea
               className="w-full p-4 border-0 bg-slate-50 rounded-2xl h-32 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none text-[15px] leading-relaxed shadow-inner"
-              value={formData.workNotice}
-              onChange={e => setFormData({ ...formData, workNotice: e.target.value })}
+              value={formData.일정안내}
+              onChange={e => setFormData({ ...formData, 일정안내: e.target.value })}
             />
           </div>
 
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-500 ml-1 flex items-center gap-1.5">
-              <ShieldAlert size={12} className="text-orange-500" /> 안전 교육
+              <Briefcase size={12} className="text-orange-500" /> 업무 안내
             </label>
             <textarea
               className="w-full p-4 border-0 bg-slate-50 rounded-2xl h-24 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none text-[15px] leading-relaxed shadow-inner"
-              value={formData.safetyNotice}
-              onChange={e => setFormData({ ...formData, safetyNotice: e.target.value })}
+              value={formData.업무안내}
+              onChange={e => setFormData({ ...formData, 업무안내: e.target.value })}
             />
           </div>
 
@@ -390,19 +403,19 @@ const App = () => {
                   <div className="space-y-4">
                     <section className="bg-gradient-to-br from-blue-50/50 to-indigo-50/50 p-5 rounded-[28px] border border-blue-100/30">
                       <h3 className="flex items-center gap-2 text-[10px] font-black text-blue-600 mb-2.5 uppercase tracking-widest">
-                        <Briefcase size={14} /> 업무안내
+                        <Clock size={14} /> 일정안내
                       </h3>
                       <div className="text-[15px] sm:text-[16px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed min-h-[100px]">
-                        {data.업무안내 || '등록된 업무 안내가 없습니다.'}
+                        {data.일정안내 || '등록된 일정 안내가 없습니다.'}
                       </div>
                     </section>
 
                     <section className="bg-gradient-to-br from-orange-50/50 to-amber-50/50 p-5 rounded-[28px] border border-orange-100/30">
                       <h3 className="flex items-center gap-2 text-[10px] font-black text-orange-600 mb-2.5 uppercase tracking-widest">
-                        <ShieldAlert size={14} /> 안전교육
+                        <Briefcase size={14} /> 업무안내
                       </h3>
                       <div className="text-[15px] sm:text-[16px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed min-h-[60px]">
-                        {data.안전교육 || '등록된 안전 교육 내용이 없습니다.'}
+                        {data.업무안내 || '등록된 업무 안내가 없습니다.'}
                       </div>
                     </section>
                   </div>
