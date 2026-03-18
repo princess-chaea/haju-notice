@@ -240,25 +240,36 @@ const App = () => {
           {!loading && data && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10">
               <div className="flex flex-col gap-6 mb-8">
-                <div className="flex justify-between items-center bg-slate-50/50 p-4 rounded-[28px] border border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-100">
+                <div className="flex justify-between items-center bg-slate-50/50 p-3 rounded-[28px] border border-slate-100 gap-2">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-100 shrink-0">
                       <Calendar size={18} />
                     </div>
-                    <div>
-                      <h2 className="text-xl font-black text-slate-800 tracking-tighter leading-none flex items-center gap-2">
-                        <span className="text-blue-600">{formatDateString(data.안내날짜)}</span>
-                        <span className="text-slate-400 opacity-50 font-normal">소식</span>
-                      </h2>
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0 font-black text-blue-600">
+                      <input 
+                        type="date" 
+                        className="bg-transparent border-0 p-0 text-lg font-black text-blue-600 outline-none focus:ring-0 w-[130px] shrink-0"
+                        onChange={(e) => fetchLatest(e.target.value)}
+                        value={formatDateString(data.안내날짜)}
+                      />
+                      <span className="text-slate-400 opacity-50 font-normal hidden xs:inline">소식</span>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setMode('admin')}
-                    className="p-2.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-300 hover:text-blue-600 transition-all active:scale-90 shadow-sm"
-                    title="관리자 설정"
-                  >
-                    <ShieldAlert size={18} />
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button 
+                      onClick={() => fetchLatest(getTodayKST())}
+                      className="bg-slate-800 text-white px-3 py-2 rounded-xl text-[9px] font-black tracking-widest uppercase hover:bg-slate-900 transition-all active:scale-95"
+                    >
+                      TODAY
+                    </button>
+                    <button
+                      onClick={() => setMode('admin')}
+                      className="p-2.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-300 hover:text-blue-600 transition-all active:scale-90 shadow-sm"
+                      title="관리자 설정"
+                    >
+                      <ShieldAlert size={18} />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -290,20 +301,7 @@ const App = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
-                  <input 
-                    type="date" 
-                    className="flex-1 text-xs p-2.5 px-3 rounded-xl bg-white shadow-sm border-0 focus:ring-2 focus:ring-blue-500 font-bold text-slate-600 transition-all font-mono"
-                    onChange={(e) => fetchLatest(e.target.value)}
-                    value={formatDateString(data.안내날짜)}
-                   />
-                   <button 
-                    onClick={() => fetchLatest(getTodayKST())}
-                    className="bg-slate-800 text-white px-4 py-2.5 rounded-xl text-[10px] font-black tracking-widest uppercase hover:bg-slate-900 transition-all active:scale-95"
-                   >
-                     TODAY
-                   </button>
-                </div>
+
               </div>
 
               <div className="space-y-4">
