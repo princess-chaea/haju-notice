@@ -26,6 +26,21 @@ const formatDateString = (dateStr) => {
   return dateStr;
 };
 
+const renderTextWithLinks = (text) => {
+  if (!text) return text;
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.split(urlRegex).map((part, i) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700 underline underline-offset-2 break-all font-bold">
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+};
+
 const App = () => {
   const [mode, setMode] = useState('view'); // 'view' or 'admin'
   const [loading, setLoading] = useState(false);
@@ -58,6 +73,7 @@ const App = () => {
     { label: '△ (오전출장)', value: '△(오전출장)' },
     { label: '△ (오후출장)', value: '△(오후출장)' },
     { label: '△ (연가)', value: '△(연가)' },
+    { label: '휴일', value: '휴일' },
   ];
 
   const [noticeCache, setNoticeCache] = useState(() => {
@@ -235,6 +251,7 @@ const App = () => {
   const StatusIcon = ({ status }) => {
     if (status === 'O') return <CheckCircle2 className="text-green-500 w-4 h-4" />;
     if (status === 'X') return <XCircle className="text-red-500 w-4 h-4" />;
+    if (status === '휴일') return <Calendar className="text-slate-400 w-4 h-4" />;
     return <AlertCircle className="text-orange-500 w-4 h-4" />;
   };
 
@@ -263,6 +280,7 @@ const App = () => {
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-500 ml-1 flex items-center gap-1.5">
               <Calendar size={12} className="text-blue-500" /> 안내 날짜
+              {loading && <span className="text-blue-500 font-bold animate-pulse ml-2 text-[10px]">데이터 동기화중입니다...</span>}
             </label>
             <div className="flex gap-2">
               <input
@@ -452,7 +470,7 @@ const App = () => {
                           <Clock size={14} /> 일정안내
                         </h3>
                         <div className="text-[15px] sm:text-[16px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed min-h-[60px]">
-                          {data.일정안내}
+                          {renderTextWithLinks(data.일정안내)}
                         </div>
                       </section>
                     )}
@@ -463,7 +481,7 @@ const App = () => {
                           <Briefcase size={14} /> 업무안내
                         </h3>
                         <div className="text-[15px] sm:text-[16px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed min-h-[60px]">
-                          {data.업무안내}
+                          {renderTextWithLinks(data.업무안내)}
                         </div>
                       </section>
                     )}
@@ -474,7 +492,7 @@ const App = () => {
                           <ShieldAlert size={14} /> 안전교육
                         </h3>
                         <div className="text-[15px] sm:text-[16px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed min-h-[60px]">
-                          {data.안전교육}
+                          {renderTextWithLinks(data.안전교육)}
                         </div>
                       </section>
                     )}
